@@ -13,7 +13,7 @@ app.use(express.json());
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.1' });
+  res.json({ status: 'ok' });
 });
 
 // Process videos with Gemini
@@ -25,13 +25,9 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
       return res.status(400).json({ error: 'Gemini API key required' });
     }
 
-    console.log(`Processing ${req.files.length} videos...`);
-
     const transcripts = await Promise.all(
-      req.files.map(async (file, index) => {
-        console.log(`Uploading video ${index + 1}: ${file.originalname}`);
-        
-        // Upload to Gemini Files API
+      req.files.map(async (file) => {
+        // Upload to Gemini
         const formData = new FormData();
         formData.append('file', file.buffer, {
           filename: file.originalname,
@@ -41,53 +37,41 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
         const uploadResponse = await axios.post(
           `https://generativelanguage.googleapis.com/upload/v1beta/files?key=${geminiApiKey}`,
           formData,
-          { 
-            headers: formData.getHeaders(),
-            maxContentLength: Infinity,
-            maxBodyLength: Infinity
-          }
+          { headers: formData.getHeaders() }
         );
 
         const fileUri = uploadResponse.data.file.uri;
-        const fileName = uploadResponse.data.file.name;
-        console.log(`File uploaded: ${fileName}, URI: ${fileUri}`);
 
-        // Wait for Gemini to process the video
-        console.log('Waiting for video processing...');
-        await new Promise(resolve => setTimeout(resolve, 8000));
+        // Wait for processing
+        await new Promise(resolve => setTimeout(resolve, 3000));
 
-        // Generate transcript using Gemini 1.5 Flash
-        console.log('Generating transcript...');
+        // Generate transcript
         const generateResponse = await axios.post(
           `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
           {
-            contents: [
-              {
-                parts: [
-                  {
-                    text: `Analyze this video clip and provide:
+            contents: [{
+              parts: [
+                {
+                  text: `Analyze this video clip and provide:
 1. A brief description of who/what is in the video (e.g., "TikTok video of woman showing McDonald's burger", "Kevin Gates on livestream", "Dr. Bobby Price podcast interview")
 2. A complete transcript of what is said
 
-Format your response EXACTLY as:
+Format your response as:
 Description: [your description]
 Transcript: [full transcript]`
-                  },
-                  {
-                    fileData: {
-                      mimeType: file.mimetype,
-                      fileUri: fileUri
-                    }
+                },
+                {
+                  file_data: {
+                    mime_type: file.mimetype,
+                    file_uri: fileUri
                   }
-                ]
-              }
-            ]
+                }
+              ]
+            }]
           }
         );
 
-        const result = generateResponse.data.candidates[0].content.parts[0].text;
-        console.log(`Video ${index + 1} processed successfully`);
-        return result;
+        return generateResponse.data.candidates[0].content.parts[0].text;
       })
     );
 
@@ -192,5 +176,5 @@ CRITICAL RULES:
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server v1.0.1 running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
