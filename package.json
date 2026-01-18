@@ -1,19 +1,11 @@
 {
   "name": "viral-script-engine",
   "version": "1.0.0",
-  "description": "AI-powered viral script generator with video processing",
+  "description": "AI-powered viral script generator backend",
   "scripts": {
-    "install-all": "cd backend && npm install && cd ../frontend && npm install",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd frontend && npm start",
-    "start": "cd backend && npm start",
-    "build": "cd frontend && npm run build"
+    "start": "cd backend && npm install && npm start"
   },
-  "repository": {
-    "type": "git",
-    "url": "your-github-repo-url"
-  },
-  "keywords": ["viral", "scripts", "ai", "content", "automation"],
-  "author": "Your Name",
-  "license": "MIT"
+  "engines": {
+    "node": ">=18.0.0"
+  }
 }
