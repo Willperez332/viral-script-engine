@@ -61,9 +61,9 @@ Description: [your description]
 Transcript: [full transcript]`
                 },
                 {
-                  fileData: {
-                    mimeType: file.mimetype,
-                    fileUri: fileUri
+                  file_data: {
+                    mime_type: file.mimetype,
+                    file_uri: fileUri
                   }
                 }
               ]
