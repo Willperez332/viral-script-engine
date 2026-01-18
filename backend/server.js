@@ -59,7 +59,7 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
         // Generate transcript using Gemini 1.5 Flash
         console.log('Generating transcript...');
         const generateResponse = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${geminiApiKey}`,
           {
             contents: [
               {
