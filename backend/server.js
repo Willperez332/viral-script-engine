@@ -13,10 +13,10 @@ app.use(express.json());
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.1' });
+  res.json({ status: 'ok', version: '1.0.2' });
 });
 
-// Process videos with Gemini
+// Process videos with Gemini - Following official docs at ai.google.dev
 app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
   try {
     const { geminiApiKey } = req.body;
@@ -25,13 +25,13 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
       return res.status(400).json({ error: 'Gemini API key required' });
     }
 
-    console.log(`Processing ${req.files.length} videos...`);
+    console.log(`[v1.0.2] Processing ${req.files.length} videos...`);
 
     const transcripts = await Promise.all(
       req.files.map(async (file, index) => {
-        console.log(`Uploading video ${index + 1}: ${file.originalname}`);
+        console.log(`[${index + 1}] Uploading: ${file.originalname}`);
         
-        // Upload to Gemini Files API
+        // Step 1: Upload file to Gemini Files API
         const formData = new FormData();
         formData.append('file', file.buffer, {
           filename: file.originalname,
@@ -48,18 +48,18 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
           }
         );
 
-        const fileUri = uploadResponse.data.file.uri;
-        const fileName = uploadResponse.data.file.name;
-        console.log(`File uploaded: ${fileName}, URI: ${fileUri}`);
+        const uploadedFile = uploadResponse.data.file;
+        console.log(`[${index + 1}] Uploaded: ${uploadedFile.name}`);
 
-        // Wait for Gemini to process the video
-        console.log('Waiting for video processing...');
-        await new Promise(resolve => setTimeout(resolve, 8000));
+        // Step 2: Wait for processing (video files need time)
+        console.log(`[${index + 1}] Waiting for video processing (10s)...`);
+        await new Promise(resolve => setTimeout(resolve, 10000));
 
-        // Generate transcript using Gemini 1.5 Flash (v1beta uses exact version)
-        console.log('Generating transcript...');
+        // Step 3: Generate content using the file
+        // Per docs: use gemini-1.5-flash (no -latest) and file name (not URI)
+        console.log(`[${index + 1}] Generating transcript...`);
         const generateResponse = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
           {
             contents: [
               {
@@ -75,8 +75,8 @@ Transcript: [full transcript]`
                   },
                   {
                     fileData: {
-                      mimeType: file.mimetype,
-                      fileUri: fileUri
+                      mimeType: uploadedFile.mimeType,
+                      fileUri: uploadedFile.uri
                     }
                   }
                 ]
@@ -86,14 +86,15 @@ Transcript: [full transcript]`
         );
 
         const result = generateResponse.data.candidates[0].content.parts[0].text;
-        console.log(`Video ${index + 1} processed successfully`);
+        console.log(`[${index + 1}] ✓ Success`);
         return result;
       })
     );
 
+    console.log('All videos processed successfully');
     res.json({ transcripts });
   } catch (error) {
-    console.error('Video processing error:', error.response?.data || error.message);
+    console.error('ERROR:', error.response?.data || error.message);
     res.status(500).json({ 
       error: 'Failed to process videos',
       details: error.response?.data?.error?.message || error.message
@@ -192,5 +193,5 @@ CRITICAL RULES:
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server v1.0.1 running on port ${PORT}`);
+  console.log(`🚀 Server v1.0.2 running on port ${PORT}`);
 });
