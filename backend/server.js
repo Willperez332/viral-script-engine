@@ -43,11 +43,11 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
         const fileUri = uploadResponse.data.file.uri;
 
         // Wait for processing
-        await new Promise(resolve => setTimeout(resolve, 3000));
+        await new Promise(resolve => setTimeout(resolve, 5000));
 
-        // Generate transcript
+        // Generate transcript using v1 API with correct model name
         const generateResponse = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`,
           {
             contents: [{
               parts: [
@@ -61,9 +61,9 @@ Description: [your description]
 Transcript: [full transcript]`
                 },
                 {
-                  file_data: {
-                    mime_type: file.mimetype,
-                    file_uri: fileUri
+                  fileData: {
+                    mimeType: file.mimetype,
+                    fileUri: fileUri
                   }
                 }
               ]
