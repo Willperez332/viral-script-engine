@@ -13,7 +13,7 @@ app.use(express.json());
 
 // Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', version: '1.0.3' });
+  res.json({ status: 'ok', version: '1.0.4' });
 });
 
 // Process videos with Gemini - Following official docs at ai.google.dev
@@ -25,7 +25,7 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
       return res.status(400).json({ error: 'Gemini API key required' });
     }
 
-    console.log(`[v1.0.3] Processing ${req.files.length} videos...`);
+    console.log(`[v1.0.4] Processing ${req.files.length} videos...`);
 
     const transcripts = await Promise.all(
       req.files.map(async (file, index) => {
@@ -56,10 +56,10 @@ app.post('/api/process-videos', upload.array('videos', 3), async (req, res) => {
         await new Promise(resolve => setTimeout(resolve, 10000));
 
         // Step 3: Generate content using the file
-        // For v1beta API, use the specific versioned model
+        // Use Gemini 2.0 Flash - the current stable model
         console.log(`[${index + 1}] Generating transcript...`);
         const generateResponse = await axios.post(
-          `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-002:generateContent?key=${geminiApiKey}`,
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiApiKey}`,
           {
             contents: [
               {
@@ -193,5 +193,5 @@ CRITICAL RULES:
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
-  console.log(`🚀 Server v1.0.3 running on port ${PORT}`);
+  console.log(`🚀 Server v1.0.4 running on port ${PORT}`);
 });
